@@ -8,15 +8,16 @@
 '''
 __author__ = 'guozhiwei'
 
-import random
-
+import sys
 import env
 env.init_env()
+import config
 
 from twisted.internet import reactor
 from twisted.internet import protocol
 from twisted.internet.protocol import ServerFactory
 import tcp_data_parser
+import tx_mq
 
 
 class ClientProtocol(protocol.Protocol):
@@ -29,7 +30,7 @@ class ClientProtocol(protocol.Protocol):
         self.recv_data_buffer = ''   #数据接受缓冲区
         self.is_sign_in = 0  #初始上来的时候没有登陆
         print 'coming new connection =>',self.transport.getPeer()
-        reactor.callLater(30, self.checkSignIn)   #30秒之后调用checkSignIn方法
+        reactor.callLater(15, self.checkSignIn)   #30秒之后调用checkSignIn方法
 
 
     def setSignIn(self):
@@ -56,16 +57,20 @@ class ClientProtocol(protocol.Protocol):
         print 'header=>' + str(header)
         print 'body=>' + str(body)
         print '====end======'
+        #将数据传递给rabbitmq
+        _data = {
+            'header' : header,
+            'body' : body,
+            'extra' : {
+                'from' : config.MAIN_TCP_SERVER_NAME
+            }
+        }
+        tx_mq.txRabbitmq.get_instance().send_msg_to_worker(_data)
 
 
     def checkSignIn(self):
-
-        if random.randint(0,1):
-            #随机断开连接  测试用
+        if not self.is_sign_in:
             self.transport.loseConnection()
-        pass
-        #if not self.is_sign_in:
-        #    self.transport.loseConnection()
 
 
 
@@ -75,6 +80,9 @@ class Factory(ServerFactory):
 
 
 if __name__ == '__main__':
+    import other_helper
+    config.MAIN_TCP_SERVER_NAME = other_helper.get_host_name() + '_' + sys.argv[1]
+    tx_mq.txRabbitmq.get_instance().init_for_main_tcp()
     factory = Factory()
     factory.protocol = ClientProtocol
     reactor.listenTCP(10231, factory)

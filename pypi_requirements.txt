@@ -1,0 +1,13 @@
+Twisted==14.0.0
+eventlet==0.15.0
+greenlet==0.4.2
+psycopg2==2.5.3
+pycrypto==2.6.1
+redis==2.10.3
+txredisapi==1.1
+zope.interface==4.1.1
+ujson==1.33
+txamqp==0.6.2
+pymongo==2.8.0
+txmongo==0.6
+sysv_ipc==0.6.8
