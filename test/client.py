@@ -57,7 +57,7 @@ class MyClientFactory(ReconnectingClientFactory):
         ReconnectingClientFactory  会自动进行断线重连
     '''
     protocol = MyProtocol
-    maxDelay = 5
+    maxDelay = 5  #最多5秒之后自动重连
 
 
 

@@ -18,7 +18,6 @@ import traceback
 from twisted.internet import error, protocol, reactor
 from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 import json_helper
-import tcp_session_manager
 
 
 class txRabbitmq:
@@ -153,3 +152,21 @@ class txRabbitmq:
             client = yield self.connect()
             yield self.open_channel(client)
             logging.error(traceback.format_exc())
+
+
+    @inlineCallbacks
+    def init_for_worker(self, worker_queue=config.WORKER_QUEUE_NAME):
+        client = yield self.connect()
+        channel = yield self.open_channel(client)
+        yield self._init_worker(channel)
+        reply = yield channel.basic_consume(queue=worker_queue, no_ack=True)
+        queue = yield client.queue(reply.consumer_tag)
+        while True:
+            data = yield queue.get()
+            try:
+                msg = json_helper.loads(data.content.body)
+                print msg
+                # session = Session(msg['sid'])
+                # green_thread(Worker.dispatch_message)(session, msg)
+            except:
+                logging.error(traceback.format_exc())
