@@ -166,6 +166,7 @@ class txRabbitmq:
             try:
                 msg = json_helper.loads(data.content.body)
                 print msg
+                #这里收到来自mq的消息 后面接着处理
                 # session = Session(msg['sid'])
                 # green_thread(Worker.dispatch_message)(session, msg)
             except:
